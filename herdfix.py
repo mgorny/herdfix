@@ -83,33 +83,40 @@ def main():
 		# start adding new herds after maintainers
 		for h in herds:
 			he = herddb[h.text.strip()]
-			attrs = dict(h.items())
-			attrs['type'] = 'herd'
-			nm = E.maintainer('\n',
-				inner_indent, E.email(he.email), '\n',
-				inner_indent, E.name(he.name), '\n',
-				indent,
-				**attrs
-			)
-			nextinsert = insertpoint.getnext()
-			nm.tail = insertpoint.tail
-			if nextinsert is not None:
-				r.insert(r.index(nextinsert), nm)
-			else:
-				# avoid extra indent
-				nm.tail = '\n'
-				r.append(nm)
-			insertpoint = nm
 
-			# now we can remove it safely
-			r.remove(h)
-
-			# now fix pre-indent
-			prev = nm.getprevious()
-			if prev is not None:
-				prev.tail = '\n' + indent
+			# look for duplicate <herd/> entries
+			for m in maints:
+				if m.find('email').text.strip() == he.email:
+					m.set('type', 'herd')
+					r.remove(h)
+					break
 			else:
-				nm.getparent().text = '\n' + indent
+				attrs = dict(h.items())
+				attrs['type'] = 'team'
+				nm = E.maintainer('\n',
+					inner_indent, E.email(he.email), '\n',
+					indent,
+					**attrs
+				)
+				nextinsert = insertpoint.getnext()
+				nm.tail = insertpoint.tail
+				if nextinsert is not None:
+					r.insert(r.index(nextinsert), nm)
+				else:
+					# avoid extra indent
+					nm.tail = '\n'
+					r.append(nm)
+				insertpoint = nm
+
+				# now we can remove it safely
+				r.remove(h)
+
+				# now fix pre-indent
+				prev = nm.getprevious()
+				if prev is not None:
+					prev.tail = '\n' + indent
+				else:
+					nm.getparent().text = '\n' + indent
 
 		try:
 			os.makedirs(os.path.dirname(outf))
