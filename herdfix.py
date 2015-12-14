@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim:se fileencoding=utf8 noet :
 
 from collections import namedtuple
 import errno
