@@ -10,6 +10,7 @@ from lxml.builder import E
 import lxml.etree
 import os
 import os.path
+import sys
 
 
 def replace(r, herddb):
@@ -108,11 +109,10 @@ def replace(r, herddb):
 				nm.getparent().text = '\n' + indent
 
 
-def main():
+def main(repopath):
 	herdtuple = namedtuple('herdtuple', ('email', 'name'))
 	herddb = {}
-	portdir = '/var/db/repos/gentoo'
-	herdsfile = os.path.join(portdir, 'metadata/herds.xml')
+	herdsfile = os.path.join(repopath, 'metadata/herds.xml')
 	herdsxml = lxml.etree.parse(herdsfile)
 	for h in herdsxml.getroot():
 		k = h.find('name').text
@@ -120,11 +120,9 @@ def main():
 		d = h.find('description').text
 		herddb[k] = herdtuple(e, d)
 
-	intree = portdir
-
 	# LAZINESS!
-	for f in glob.glob(os.path.join(intree, '*/*/metadata.xml')):
-		subpath = os.path.relpath(f, intree)
+	for f in glob.glob(os.path.join(repopath, '*/*/metadata.xml')):
+		subpath = os.path.relpath(f, repopath)
 		print(subpath)
 
 		xml = lxml.etree.parse(f)
@@ -142,6 +140,8 @@ def main():
 		with open(f, 'ab') as f:
 			f.write(b'\n')
 
+	return 0
+
 
 if __name__ == '__main__':
-	main()
+	sys.exit(main(*sys.argv[1:]))
