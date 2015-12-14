@@ -121,13 +121,11 @@ def main():
 		herddb[k] = herdtuple(e, d)
 
 	intree = portdir
-	outtree = '/tmp/1'
 
 	# LAZINESS!
 	for f in glob.glob(os.path.join(intree, '*/*/metadata.xml')):
 		subpath = os.path.relpath(f, intree)
 		print(subpath)
-		outf = os.path.join(outtree, subpath)
 
 		xml = lxml.etree.parse(f)
 		r = xml.getroot()
@@ -135,18 +133,13 @@ def main():
 		replace(r, herddb)
 
 		try:
-			os.makedirs(os.path.dirname(outf))
-		except OSError as e:
-			if e.errno != errno.EEXIST:
-				raise
-		try:
-			os.unlink(outf)
+			os.unlink(f)
 		except OSError as e:
 			if e.errno != errno.ENOENT:
 				raise
-		xml.write(outf, encoding='UTF-8', xml_declaration='1.0')
+		xml.write(f, encoding='UTF-8', xml_declaration='1.0')
 		# yay, add trailing newline because lxml is dumb
-		with open(outf, 'ab') as f:
+		with open(f, 'ab') as f:
 			f.write(b'\n')
 
 
