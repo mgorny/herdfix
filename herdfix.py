@@ -6,6 +6,7 @@
 from collections import namedtuple
 import errno
 import glob
+import json
 from lxml.builder import E
 import lxml.etree
 import os
@@ -18,7 +19,7 @@ def replace(r, herddb):
 	Replace <herd/> with <maintainer/> elements, guessing indent.
 
 	r: XML root element
-	herddb: Herds info database
+	herddb: Herds replacement database
 	"""
 	herds = r.findall('herd')
 	if not herds: # yay, one file less to care about
@@ -72,53 +73,61 @@ def replace(r, herddb):
 
 	# start adding new herds after maintainers
 	for h in herds:
-		he = herddb[h.text.strip()]
+		new_maints = herddb[h.text.strip()]
 
 		# look for duplicate <herd/> entries
 		for m in maints:
-			if m.find('email').text.strip() == he.email:
-				m.set('type', 'herd')
-				r.remove(h)
-				break
+			m_email = m.find('email').text.strip()
+			for nmc in new_maints:
+				if m_email == nmc['email']:
+					new_maints.remove(nmc)
+					break
+
+		if not new_maints:
+			r.remove(h)
 		else:
-			attrs = dict(h.items())
-			attrs['type'] = 'team'
-			nm = E.maintainer('\n',
-				inner_indent, E.email(he.email), '\n',
-				indent,
-				**attrs
-			)
-			nextinsert = insertpoint.getnext()
-			nm.tail = insertpoint.tail
-			if nextinsert is not None:
-				r.insert(r.index(nextinsert), nm)
-			else:
-				# avoid extra indent
-				nm.tail = '\n'
-				r.append(nm)
-			insertpoint = nm
+			first_m = None
+
+			for new_maint in new_maints:
+				els = ['\n',
+					inner_indent, E.email(new_maint['email']), '\n']
+				if new_maint['name']:
+					els += [
+						inner_indent, E.name(new_maint['name']), '\n']
+				els += [indent]
+				nm = E.maintainer(*els)
+				if first_m is not None:
+					first_m = nm
+
+				nextinsert = insertpoint.getnext()
+				nm.tail = insertpoint.tail
+				if nextinsert is not None:
+					r.insert(r.index(nextinsert), nm)
+				else:
+					# avoid extra indent
+					nm.tail = '\n'
+					r.append(nm)
+				insertpoint = nm
 
 			# now we can remove it safely
 			r.remove(h)
 
-			# now fix pre-indent
-			prev = nm.getprevious()
-			if prev is not None:
-				prev.tail = '\n' + indent
-			else:
-				nm.getparent().text = '\n' + indent
+			if first_m is not None:
+				# now fix pre-indent
+				prev = first_m.getprevious()
+				if prev is not None:
+					prev.tail = '\n' + indent
+				else:
+					first_m.getparent().text = '\n' + indent
 
 
-def main(repopath):
-	herdtuple = namedtuple('herdtuple', ('email', 'name'))
-	herddb = {}
-	herdsfile = os.path.join(repopath, 'metadata/herds.xml')
-	herdsxml = lxml.etree.parse(herdsfile)
-	for h in herdsxml.getroot():
-		k = h.find('name').text
-		e = h.find('email').text
-		d = h.find('description').text
-		herddb[k] = herdtuple(e, d)
+def main(repopath, herd_mapping):
+	with open(herd_mapping) as f:
+		herddb = json.load(f)
+
+	# special cases
+	herddb['maintainer-needed'] = []
+	herddb['no-herd'] = []
 
 	# LAZINESS!
 	for f in glob.glob(os.path.join(repopath, '*/*/metadata.xml')):
