@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # vim:se fileencoding=utf8 noet :
+# (c) 2015 Michał Górny
+# 2-clause BSD license
 
 from collections import namedtuple
 import errno
