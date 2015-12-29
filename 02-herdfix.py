@@ -120,6 +120,10 @@ def replace(r, herddb):
 				else:
 					first_m.getparent().text = '\n' + indent
 
+	if len(r) == 0:
+		r.text = '\n'
+		r.tail = ''
+
 
 def main(repopath, herd_mapping):
 	with open(herd_mapping) as f:
