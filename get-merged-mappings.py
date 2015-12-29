@@ -6,6 +6,7 @@
 import json
 import lxml.etree
 import sys
+import urllib.parse
 
 
 def main(name_mapping, herds_xml, projects_xml):
@@ -32,7 +33,7 @@ def main(name_mapping, herds_xml, projects_xml):
 	projects_db = {}
 	projects_xml = lxml.etree.parse(projects_xml)
 	for p in projects_xml.getroot():
-		p_url = p.find('url').text
+		p_url = urllib.parse.unquote(p.find('url').text)
 		p_name = p.find('name').text
 		p_email = p.find('email').text
 		projects_db[p_url] = {
