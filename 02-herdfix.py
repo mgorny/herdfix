@@ -139,14 +139,10 @@ def main(repopath, herd_mapping):
 
 		replace(r, herddb)
 
-		try:
-			os.unlink(f)
-		except OSError as e:
-			if e.errno != errno.ENOENT:
-				raise
-		xml.write(f, encoding='UTF-8', xml_declaration='1.0')
-		# yay, add trailing newline because lxml is dumb
-		with open(f, 'ab') as f:
+		with open(f, 'wb') as f:
+			f.write(b'<?xml version="1.0" encoding="UTF-8"?>\n')
+			xml.write(f, encoding='UTF-8')
+			# yay, add trailing newline because lxml is dumb
 			f.write(b'\n')
 
 	return 0
