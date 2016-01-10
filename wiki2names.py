@@ -18,7 +18,8 @@ def main(path):
 			if l.startswith('| '):
 				herd, project = (x.strip(' |[]') for x in l.split('||')[:2])
 				print('%s: %s' % (herd, os.path.join(WIKI_BASE_URL,
-					project.replace(' ', '_')) if project else ''))
+					project.replace(' ', '_'))
+					if project not in ('', '-') else project))
 
 
 if __name__ == '__main__':
