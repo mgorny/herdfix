@@ -3,7 +3,7 @@
 # (c) 2015 Michał Górny
 # 2-clause BSD license
 
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 import errno
 import glob
 import json
@@ -23,7 +23,7 @@ def replace(r, herddb):
 	"""
 	herds = r.findall('herd')
 	if not herds: # yay, one file less to care about
-		return
+		return []
 	maints = r.findall('maintainer')
 	if maints:
 		insertpoint = maints[-1]
@@ -72,7 +72,9 @@ def replace(r, herddb):
 		pass
 
 	# start adding new herds after maintainers
+	repl = []
 	for h in herds:
+		repl.append(h.text.strip())
 		new_maints = herddb[h.text.strip()]
 
 		# look for duplicate <herd/> entries
@@ -124,14 +126,18 @@ def replace(r, herddb):
 		r.text = '\n'
 		r.tail = ''
 
+	return repl
 
-def main(repopath, herd_mapping):
+
+def main(repopath, herd_mapping, count_file=None):
 	with open(herd_mapping) as f:
 		herddb = json.load(f)
 
 	# special cases
 	herddb['maintainer-needed'] = []
 	herddb['no-herd'] = []
+
+	counts = defaultdict(lambda: 0)
 
 	# LAZINESS!
 	for f in glob.glob(os.path.join(repopath, '*/*/metadata.xml')):
@@ -141,13 +147,20 @@ def main(repopath, herd_mapping):
 		xml = lxml.etree.parse(f)
 		r = xml.getroot()
 
-		replace(r, herddb)
+		r_herds = replace(r, herddb)
+
+		for h in r_herds:
+			counts[h] += 1
 
 		with open(f, 'wb') as f:
 			f.write(b'<?xml version="1.0" encoding="UTF-8"?>\n')
 			xml.write(f, encoding='UTF-8')
 			# yay, add trailing newline because lxml is dumb
 			f.write(b'\n')
+
+	if count_file:
+		with open(count_file, 'w') as f:
+			json.dump(counts, f)
 
 	return 0
 
