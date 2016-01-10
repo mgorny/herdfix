@@ -45,10 +45,12 @@ def main(name_mapping, herds_xml, projects_xml):
 		for l in f:
 			herd, project = (x.strip() for x in l.split(':', 1))
 			outmap[herd] = []
-			if project:
+			if project == '-':
+				outmap[herd].extend(herds_db[herd])
+			elif project:
 				outmap[herd].append(projects_db[project])
 			else:
-				outmap[herd].extend(herds_db[herd])
+				outmap[herd] = []
 
 	json.dump(outmap, sys.stdout)
 
