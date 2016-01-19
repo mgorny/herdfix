@@ -75,7 +75,7 @@ def replace(r, herddb):
 	repl = []
 	for h in herds:
 		repl.append(h.text.strip())
-		new_maints = herddb[h.text.strip()]
+		new_maints = list(herddb[h.text.strip()])
 
 		# look for duplicate <herd/> entries
 		for m in maints:
