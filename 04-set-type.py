@@ -19,8 +19,8 @@ def set_types(r, projects, devs):
 		elif not m_email.endswith('@gentoo.org'):
 			new_type = 'person'
 		else:
-			# non-GLEP conformant, placed as FIXME
-			new_type = 'unknown'
+			raise ValueError("%s is neither a project nor a person"
+					% m_email)
 		m.set('type', new_type)
 
 
