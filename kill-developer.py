@@ -85,7 +85,7 @@ def main() -> int:
     if args.repoman:
         for p in pkg:
             print(p)
-            os.chdir(args.path + p)
+            os.chdir(args.path + '/' + p)
             os.system('repoman -x full')
 
     print('Packages up for grabs:')
