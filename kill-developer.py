@@ -72,8 +72,6 @@ def main() -> int:
         with open(f, 'wb') as f:
             f.write(b'<?xml version="1.0" encoding="UTF-8"?>\n')
             xml.write(f, encoding='UTF-8', pretty_print=True)
-            # yay, add trailing newline because lxml is dumb
-            f.write(b'\n')
 
     # Run repoman in edited packages
     if args.repoman:
